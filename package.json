@@ -117,11 +117,6 @@
   ],
   "license": "MIT",
   "main": "lib/node/index.js",
-  "prettier": {
-    "singleQuote": true,
-    "bracketSpacing": true,
-    "trailingComma": "none"
-  },
   "scripts": {
     "browserify": "browserify src/node/index.js -o dist/superagent.js -s superagent -g [ babelify --configFile ./.dist.babelrc ]",
     "build": "npm run build:clean && npm run build:lib && npm run build:dist",
@@ -129,69 +124,10 @@
     "build:dist": "npm run browserify && npm run minify",
     "build:lib": "babel --config-file ./.lib.babelrc src --out-dir lib",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
-    "lint": "xo && remark . -qfo && eslint -c .lib.eslintrc lib && eslint -c .dist.eslintrc dist",
     "minify": "cross-env NODE_ENV=production browserify src/node/index.js -o dist/superagent.min.js -s superagent -g [ babelify --configFile ./.dist.babelrc ] -p tinyify",
     "nyc": "cross-env NODE_ENV=test nyc ava",
-    "test": "npm run build && npm run lint && make test",
-    "test-http2": "npm run build && npm run lint && make test-node-http2"
+    "test": "npm run build && make test",
+    "test-http2": "npm run build && make test-node-http2"
   },
-  "unpkg": "dist/superagent.min.js",
-  "xo": {
-    "prettier": true,
-    "space": true,
-    "extends": [
-      "xo-lass"
-    ],
-    "env": [
-      "node",
-      "browser"
-    ],
-    "overrides": [
-      {
-        "files": "test/**/*.js",
-        "env": [
-          "mocha"
-        ],
-        "rules": {
-          "block-scoped-var": "off",
-          "complexity": "off",
-          "default-case": "off",
-          "eqeqeq": "off",
-          "func-name-matching": "off",
-          "func-names": "off",
-          "guard-for-in": "off",
-          "handle-callback-err": "off",
-          "import/no-extraneous-dependencies": "off",
-          "import/no-unassigned-import": "off",
-          "import/order": "off",
-          "max-nested-callbacks": "off",
-          "new-cap": "off",
-          "no-eq-null": "off",
-          "no-extend-native": "off",
-          "no-implicit-coercion": "off",
-          "no-multi-assign": "off",
-          "no-negated-condition": "off",
-          "no-prototype-builtins": "off",
-          "no-redeclare": "off",
-          "no-undef": "off",
-          "no-unused-expressions": "off",
-          "no-unused-vars": "off",
-          "no-use-extend-native/no-use-extend-native": "off",
-          "no-useless-escape": "off",
-          "no-var": "off",
-          "no-void": "off",
-          "node/no-deprecated-api": "off",
-          "prefer-rest-params": "off",
-          "prefer-spread": "off",
-          "promise/prefer-await-to-then": "off",
-          "promise/valid-params": "off",
-          "unicorn/filename-case": "off",
-          "valid-jsdoc": "off"
-        }
-      }
-    ],
-    "globals": [
-      "ActiveXObject"
-    ]
-  }
+  "unpkg": "dist/superagent.min.js"
 }

@@ -43,7 +43,7 @@ function mixin(obj) {
  * @api public
  */
 
-RequestBase.prototype.clearTimeout = function() {
+RequestBase.prototype.clearTimeout = function () {
   clearTimeout(this._timer);
   clearTimeout(this._responseTimeoutTimer);
   clearTimeout(this._uploadTimeoutTimer);
@@ -62,7 +62,7 @@ RequestBase.prototype.clearTimeout = function() {
  * @api public
  */
 
-RequestBase.prototype.parse = function(fn) {
+RequestBase.prototype.parse = function (fn) {
   this._parser = fn;
   return this;
 };
@@ -85,7 +85,7 @@ RequestBase.prototype.parse = function(fn) {
  * @api public
  */
 
-RequestBase.prototype.responseType = function(val) {
+RequestBase.prototype.responseType = function (val) {
   this._responseType = val;
   return this;
 };
@@ -99,7 +99,7 @@ RequestBase.prototype.responseType = function(val) {
  * @api public
  */
 
-RequestBase.prototype.serialize = function(fn) {
+RequestBase.prototype.serialize = function (fn) {
   this._serializer = fn;
   return this;
 };
@@ -118,7 +118,7 @@ RequestBase.prototype.serialize = function(fn) {
  * @api public
  */
 
-RequestBase.prototype.timeout = function(options) {
+RequestBase.prototype.timeout = function (options) {
   if (!options || typeof options !== 'object') {
     this._timeout = options;
     this._responseTimeout = 0;
@@ -158,7 +158,7 @@ RequestBase.prototype.timeout = function(options) {
  * @api public
  */
 
-RequestBase.prototype.retry = function(count, fn) {
+RequestBase.prototype.retry = function (count, fn) {
   // Default to 1 if no count passed or true
   if (arguments.length === 0 || count === true) count = 1;
   if (count <= 0) count = 0;
@@ -178,12 +178,12 @@ const ERROR_CODES = ['ECONNRESET', 'ETIMEDOUT', 'EADDRINFO', 'ESOCKETTIMEDOUT'];
  * @param {Response} [res] response
  * @returns {Boolean} if segment should be retried
  */
-RequestBase.prototype._shouldRetry = function(err, res) {
-  return new Promise((resolve, reject) => {
+RequestBase.prototype._shouldRetry = function (err, res) {
+  return new Promise(resolve => {
     if (!this._maxRetries || this._retries++ >= this._maxRetries) {
       return resolve(false);
     }
-  
+
     if (this._retryCallback) {
       try {
         this._retryCallback(err, res).then((override) => {
@@ -194,18 +194,20 @@ RequestBase.prototype._shouldRetry = function(err, res) {
         console.error(err_);
       }
     }
-  
-    if (res && res.status && res.status >= 500 && res.status !== 501) return resolve(true);
+
+    if (res && res.status && res.status >= 500 && res.status !== 501)
+      return resolve(true);
+
     if (err) {
       if (err.code && ERROR_CODES.includes(err.code)) return resolve(true);
       // Superagent timeout
       if (err.timeout && err.code === 'ECONNABORTED') return resolve(true);
       if (err.crossDomain) return resolve(true);
     }
-  
+
     return resolve(false);
   });
-  
+
 };
 
 /**
@@ -215,7 +217,7 @@ RequestBase.prototype._shouldRetry = function(err, res) {
  * @api private
  */
 
-RequestBase.prototype._retry = function() {
+RequestBase.prototype._retry = function () {
   return new Promise((resolve, reject) => {
     this.clearTimeout();
 
@@ -241,7 +243,7 @@ RequestBase.prototype._retry = function() {
  * @return {Request}
  */
 
-RequestBase.prototype.then = function(resolve, reject) {
+RequestBase.prototype.then = function (resolve, reject) {
   if (!this._fullfilledPromise) {
     const self = this;
     if (this._endCalled) {
@@ -278,7 +280,7 @@ RequestBase.prototype.then = function(resolve, reject) {
   return this._fullfilledPromise.then(resolve, reject);
 };
 
-RequestBase.prototype.catch = function(cb) {
+RequestBase.prototype.catch = function (cb) {
   return this.then(undefined, cb);
 };
 
@@ -286,18 +288,18 @@ RequestBase.prototype.catch = function(cb) {
  * Allow for extension
  */
 
-RequestBase.prototype.use = function(fn) {
+RequestBase.prototype.use = function (fn) {
   fn(this);
   return this;
 };
 
-RequestBase.prototype.ok = function(cb) {
+RequestBase.prototype.ok = function (cb) {
   if (typeof cb !== 'function') throw new Error('Callback required');
   this._okCallback = cb;
   return this;
 };
 
-RequestBase.prototype._isResponseOK = function(res) {
+RequestBase.prototype._isResponseOK = function (res) {
   if (!res) {
     return false;
   }
@@ -318,7 +320,7 @@ RequestBase.prototype._isResponseOK = function(res) {
  * @api public
  */
 
-RequestBase.prototype.get = function(field) {
+RequestBase.prototype.get = function (field) {
   return this._header[field.toLowerCase()];
 };
 
@@ -357,7 +359,7 @@ RequestBase.prototype.getHeader = RequestBase.prototype.get;
  * @api public
  */
 
-RequestBase.prototype.set = function(field, val) {
+RequestBase.prototype.set = function (field, val) {
   if (isObject(field)) {
     for (const key in field) {
       if (Object.prototype.hasOwnProperty.call(field, key))
@@ -384,7 +386,7 @@ RequestBase.prototype.set = function(field, val) {
  *
  * @param {String} field field name
  */
-RequestBase.prototype.unset = function(field) {
+RequestBase.prototype.unset = function (field) {
   delete this._header[field.toLowerCase()];
   delete this.header[field];
   return this;
@@ -409,7 +411,7 @@ RequestBase.prototype.unset = function(field) {
  * @return {Request} for chaining
  * @api public
  */
-RequestBase.prototype.field = function(name, val) {
+RequestBase.prototype.field = function (name, val) {
   // name should be either a string or an object.
   if (name === null || undefined === name) {
     throw new Error('.field(name, val) name can not be empty');
@@ -458,7 +460,7 @@ RequestBase.prototype.field = function(name, val) {
  * @return {Request} request
  * @api public
  */
-RequestBase.prototype.abort = function() {
+RequestBase.prototype.abort = function () {
   if (this._aborted) {
     return this;
   }
@@ -471,7 +473,7 @@ RequestBase.prototype.abort = function() {
   return this;
 };
 
-RequestBase.prototype._auth = function(user, pass, options, base64Encoder) {
+RequestBase.prototype._auth = function (user, pass, options, base64Encoder) {
   switch (options.type) {
     case 'basic':
       this.set('Authorization', `Basic ${base64Encoder(`${user}:${pass}`)}`);
@@ -503,7 +505,7 @@ RequestBase.prototype._auth = function(user, pass, options, base64Encoder) {
  * @api public
  */
 
-RequestBase.prototype.withCredentials = function(on) {
+RequestBase.prototype.withCredentials = function (on) {
   // This is browser-only functionality. Node side is no-op.
   if (on === undefined) on = true;
   this._withCredentials = on;
@@ -518,7 +520,7 @@ RequestBase.prototype.withCredentials = function(on) {
  * @api public
  */
 
-RequestBase.prototype.redirects = function(n) {
+RequestBase.prototype.redirects = function (n) {
   this._maxRedirects = n;
   return this;
 };
@@ -530,7 +532,7 @@ RequestBase.prototype.redirects = function(n) {
  * @param {Number} n number of bytes
  * @return {Request} for chaining
  */
-RequestBase.prototype.maxResponseSize = function(n) {
+RequestBase.prototype.maxResponseSize = function (n) {
   if (typeof n !== 'number') {
     throw new TypeError('Invalid argument');
   }
@@ -548,7 +550,7 @@ RequestBase.prototype.maxResponseSize = function(n) {
  * @api public
  */
 
-RequestBase.prototype.toJSON = function() {
+RequestBase.prototype.toJSON = function () {
   return {
     method: this.method,
     url: this.url,
@@ -598,7 +600,7 @@ RequestBase.prototype.toJSON = function() {
  */
 
 // eslint-disable-next-line complexity
-RequestBase.prototype.send = function(data) {
+RequestBase.prototype.send = function (data) {
   const isObj = isObject(data);
   let type = this._header['content-type'];
 
@@ -674,7 +676,7 @@ RequestBase.prototype.send = function(data) {
  * @api public
  */
 
-RequestBase.prototype.sortQuery = function(sort) {
+RequestBase.prototype.sortQuery = function (sort) {
   // _sort default to true but otherwise can be a function or boolean
   this._sort = typeof sort === 'undefined' ? true : sort;
   return this;
@@ -685,7 +687,7 @@ RequestBase.prototype.sortQuery = function(sort) {
  *
  * @api private
  */
-RequestBase.prototype._finalizeQueryString = function() {
+RequestBase.prototype._finalizeQueryString = function () {
   const query = this._query.join('&');
   if (query) {
     this.url += (this.url.includes('?') ? '&' : '?') + query;
@@ -719,7 +721,7 @@ RequestBase.prototype._appendQueryString = () => {
  * @api private
  */
 
-RequestBase.prototype._timeoutError = function(reason, timeout, errno) {
+RequestBase.prototype._timeoutError = function (reason, timeout, errno) {
   if (this._aborted) {
     return;
   }
@@ -734,7 +736,7 @@ RequestBase.prototype._timeoutError = function(reason, timeout, errno) {
   this.callback(err);
 };
 
-RequestBase.prototype._setTimeouts = function() {
+RequestBase.prototype._setTimeouts = function () {
   const self = this;
 
   // deadline
