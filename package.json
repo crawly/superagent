@@ -116,22 +116,6 @@
     "xmlhttprequest"
   ],
   "license": "MIT",
-  "lint-staged": {
-    "linters": {
-      "*.js": [
-        "xo --fix",
-        "git add"
-      ],
-      "*.md": [
-        "remark . -qfo",
-        "git add"
-      ],
-      "package.json": [
-        "fixpack",
-        "git add"
-      ]
-    }
-  },
   "main": "lib/node/index.js",
   "prettier": {
     "singleQuote": true,
