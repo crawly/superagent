@@ -108,9 +108,7 @@
     "build:lib": "babel --config-file ./.lib.babelrc src --out-dir lib",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "minify": "cross-env NODE_ENV=production browserify src/node/index.js -o dist/superagent.min.js -s superagent -g [ babelify --configFile ./.dist.babelrc ] -p tinyify",
-    "nyc": "cross-env NODE_ENV=test nyc ava",
-    "test": "npm run build && make test",
-    "test-http2": "npm run build && make test-node-http2"
+    "nyc": "cross-env NODE_ENV=test nyc ava"
   },
   "unpkg": "dist/superagent.min.js"
 }

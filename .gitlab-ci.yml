@@ -1,15 +1,8 @@
 stages:
-  - tests
   - publish
 
 before_script:
   - npm install
-
-tests:
-  image: node:8.15-alpine
-  stage: tests
-  script:
-    - npm run test
 
 publish:
   image: node:8.15-alpine
