@@ -9,10 +9,7 @@ tests:
   image: node:8.15-alpine
   stage: tests
   script:
-    - npm run tslint
-    - npm run test:unit
-    - npm run test:integration
-    - npm run test:contract
+    - npm run test
 
 publish:
   image: node:8.15-alpine
