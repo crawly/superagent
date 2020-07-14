@@ -8,14 +8,6 @@
     "./lib/node/index.js": "./lib/client.js",
     "./test/support/server.js": "./test/support/blank.js"
   },
-  "bugs": {
-    "url": "https://github.com/visionmedia/superagent/issues"
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
   "contributors": [
     "Kornel Lesiński <kornel@geekhood.net>",
     "Peter Lyons <pete@peterlyons.com>",
@@ -56,14 +48,11 @@
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "fixpack": "^3.0.6",
-    "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
     "marked": "^1.1.0",
     "mocha": "3.5.3",
     "multer": "^1.4.2",
     "nyc": "^15.1.0",
-    "remark-cli": "^8.0.0",
-    "remark-preset-github": "^2.0.0",
     "rimraf": "^3.0.2",
     "should": "^13.2.3",
     "should-http": "^0.1.1",
@@ -76,12 +65,6 @@
     "node": ">= 7.0.0"
   },
   "homepage": "https://github.com/visionmedia/superagent",
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm test",
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-    }
-  },
   "jsdelivr": "dist/superagent.min.js",
   "keywords": [
     "agent",
