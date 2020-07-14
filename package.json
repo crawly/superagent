@@ -99,7 +99,6 @@
     "xmlhttprequest"
   ],
   "license": "MIT",
-  "main": "lib/node/index.js",
   "scripts": {
     "browserify": "browserify src/node/index.js -o dist/superagent.js -s superagent -g [ babelify --configFile ./.dist.babelrc ]",
     "build": "npm run build:clean && npm run build:lib && npm run build:dist",
