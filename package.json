@@ -138,15 +138,6 @@
     "bracketSpacing": true,
     "trailingComma": "none"
   },
-  "remarkConfig": {
-    "plugins": [
-      "preset-github"
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/visionmedia/superagent.git"
-  },
   "scripts": {
     "browserify": "browserify src/node/index.js -o dist/superagent.js -s superagent -g [ babelify --configFile ./.dist.babelrc ]",
     "build": "npm run build:clean && npm run build:lib && npm run build:dist",
