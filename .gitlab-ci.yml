@@ -1,0 +1,16 @@
+stages:
+  - publish
+
+before_script:
+  - npm install
+
+publish:
+  image: node:8.15-alpine
+  stage: publish
+  only:
+    - tags
+  script:
+    - npm run build
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+    - npm set scope @crawly
+    - npm publish --access public
