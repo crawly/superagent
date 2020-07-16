@@ -268,6 +268,8 @@ RequestBase.prototype.then = function (resolve, reject) {
         err.status = this.status;
         err.method = this.method;
         err.url = this.url;
+        err.req = this.req;
+
         reject(err);
       });
       self.end((err, res) => {
@@ -730,6 +732,8 @@ RequestBase.prototype._timeoutError = function (reason, timeout, errno) {
   err.timeout = timeout;
   err.code = 'ECONNABORTED';
   err.errno = errno;
+  err.req = this.req;
+  
   this.timedout = true;
   this.timedoutError = err;
   this.abort();
