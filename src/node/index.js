@@ -859,16 +859,19 @@ Request.prototype.request = function () {
 
 Request.prototype.callback = function (err, res) {
   return new Promise(resolve => {
-    this._shouldRetry(err, res).then(shouldRetry => {
+    const fnShouldRetry = (shouldRetry) => {
       if (shouldRetry) {
-        this._retry().then(resolve);
+        this._retry().then(resolve).catch(err_ => {
+          err = err_;
+          fnShouldRetry(false)
+        });
         return;
       }
 
       // Avoid the error which is emitted from 'socket hang up' to cause the fn undefined error on JS runtime.
       const fn = this._callback || noop;
       this.clearTimeout();
-      if (this.called) return console.warn('superagent: double callback bug');
+      if (this.called) return;
       this.called = true;
 
       if (!err) {
@@ -905,7 +908,9 @@ Request.prototype.callback = function (err, res) {
 
       fn(err, res);
       return resolve();
-    });
+    }
+
+    this._shouldRetry(err, res).then(fnShouldRetry);
   });
 };
 
