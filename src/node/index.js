@@ -859,9 +859,12 @@ Request.prototype.request = function () {
 
 Request.prototype.callback = function (err, res) {
   return new Promise(resolve => {
-    this._shouldRetry(err, res).then(shouldRetry => {
+    const fnShouldRetry = (shouldRetry) => {
       if (shouldRetry) {
-        this._retry().then(resolve);
+        this._retry().then(resolve).catch(err_ => {
+          err = err_;
+          fnShouldRetry(false)
+        });
         return;
       }
 
@@ -905,7 +908,9 @@ Request.prototype.callback = function (err, res) {
 
       fn(err, res);
       return resolve();
-    });
+    }
+
+    this._shouldRetry(err, res).then(fnShouldRetry);
   });
 };
 
