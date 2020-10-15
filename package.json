@@ -3,6 +3,10 @@
   "description": "elegant & feature rich browser / node HTTP with a fluent API",
   "version": "5.3.1-crawly-v3",
   "author": "TJ Holowaychuk <tj@vision-media.ca>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crawly/superagent.git"
+  },
   "browser": {
     "./src/node/index.js": "./src/client.js",
     "./lib/node/index.js": "./lib/client.js",
@@ -103,6 +107,9 @@
   "files": [
     "lib/**/*"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "browserify": "browserify src/node/index.js -o dist/superagent.js -s superagent -g [ babelify --configFile ./.dist.babelrc ]",
     "build": "npm run build:clean && npm run build:lib && npm run build:dist && npm run build:ts",
