@@ -849,6 +849,65 @@ Request.prototype.request = function () {
 };
 
 /**
+ * Check is should retry with `err` and `res`
+ * and handle arity check.
+ *
+ * @param {Error} err
+ * @param {Response} res
+ * @api private
+ */
+Request.prototype.shouldRetry = function (resolve, err, res, shouldRetry) {
+  if (shouldRetry) {
+    this._retry().then(resolve).catch(err_ => {
+      err = err_;
+      this.shouldRetry(resolve, err, res, false)
+    });
+    return;
+  }
+
+  // Avoid the error which is emitted from 'socket hang up' to cause the fn undefined error on JS runtime.
+  const fn = this._callback || noop;
+  this.clearTimeout();
+  if (this.called) return resolve();
+  this.called = true;
+
+  if (!err) {
+    try {
+      if (!this._isResponseOK(res)) {
+        let msg = 'Unsuccessful HTTP response';
+        if (res) {
+          msg = http.STATUS_CODES[res.status] || msg;
+        }
+
+        err = new Error(msg);
+        err.status = res ? res.status : undefined;
+      }
+    } catch (err_) {
+      err = err_;
+    }
+  }
+
+  // It's important that the callback is called outside try/catch
+  // to avoid double callback
+  if (!err) {
+    fn(null, res);
+    return resolve();
+  }
+
+  err.response = res;
+  if (this._maxRetries) err.retries = this._retries - 1;
+
+  // only emit error event if there is a listener
+  // otherwise we assume the callback to `.end()` will get the error
+  if (err && this.listeners('error').length > 0) {
+    this.emit('error', err);
+  }
+
+  fn(err, res);
+  return resolve();
+}
+
+/**
  * Invoke the callback with `err` and `res`
  * and handle arity check.
  *
@@ -856,61 +915,11 @@ Request.prototype.request = function () {
  * @param {Response} res
  * @api private
  */
-
 Request.prototype.callback = function (err, res) {
-  return new Promise(resolve => {
-    const fnShouldRetry = (shouldRetry) => {
-      if (shouldRetry) {
-        this._retry().then(resolve).catch(err_ => {
-          err = err_;
-          fnShouldRetry(false)
-        });
-        return;
-      }
-
-      // Avoid the error which is emitted from 'socket hang up' to cause the fn undefined error on JS runtime.
-      const fn = this._callback || noop;
-      this.clearTimeout();
-      if (this.called) return;
-      this.called = true;
-
-      if (!err) {
-        try {
-          if (!this._isResponseOK(res)) {
-            let msg = 'Unsuccessful HTTP response';
-            if (res) {
-              msg = http.STATUS_CODES[res.status] || msg;
-            }
-
-            err = new Error(msg);
-            err.status = res ? res.status : undefined;
-          }
-        } catch (err_) {
-          err = err_;
-        }
-      }
-
-      // It's important that the callback is called outside try/catch
-      // to avoid double callback
-      if (!err) {
-        fn(null, res);
-        return resolve();
-      }
-
-      err.response = res;
-      if (this._maxRetries) err.retries = this._retries - 1;
-
-      // only emit error event if there is a listener
-      // otherwise we assume the callback to `.end()` will get the error
-      if (err && this.listeners('error').length > 0) {
-        this.emit('error', err);
-      }
-
-      fn(err, res);
-      return resolve();
-    }
-
-    this._shouldRetry(err, res).then(fnShouldRetry);
+  return new Promise(function (resolve, reject) {
+    this._shouldRetry(err, res)
+      .then((shouldRetry) => this.shouldRetry(resolve, err, res, shouldRetry))
+      .catch(reject);
   });
 };
 

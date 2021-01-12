@@ -637,6 +637,20 @@ Request.prototype._getFormData = function() {
   return this._formData;
 };
 
+Request.prototype.callbackRetryCheck = function(resolve, shouldRetry) {
+  if (shouldRetry)
+    return this._retry().then(resolve);
+
+  const fn = this._callback;
+
+  if (err) {
+    if (this._maxRetries) err.retries = this._retries - 1;
+    this.emit('error', err);
+  }
+
+  fn(err, res);
+};
+
 /**
  * Invoke the callback with `err` and `res`
  * and handle arity check.
@@ -647,19 +661,14 @@ Request.prototype._getFormData = function() {
  */
 
 Request.prototype.callback = function(err, res) {
-  if (this._shouldRetry(err, res)) {
-    return this._retry();
-  }
-
-  const fn = this._callback;
   this.clearTimeout();
-
-  if (err) {
-    if (this._maxRetries) err.retries = this._retries - 1;
-    this.emit('error', err);
-  }
-
-  fn(err, res);
+  return new Promise(function (resolve, reject) {
+    this._shouldRetry(err, res)
+      .then(shouldRetry => {
+        return this.callbackRetryCheck(resolve, shouldRetry);
+      })
+      .catch(reject); 
+  });  
 };
 
 /**

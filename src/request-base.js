@@ -171,6 +171,44 @@ RequestBase.prototype.retry = function (count, fn) {
 const ERROR_CODES = ['ECONNRESET', 'ETIMEDOUT', 'EADDRINFO', 'ESOCKETTIMEDOUT'];
 
 /**
+ * Check if a request should be retried.
+ * (Borrowed from segmentio/superagent-retry)
+ *
+ * @param {Error} err an error
+ * @param {Response} [res] response
+ * @param {Promise} resolve
+ * @returns {Boolean} if segment should be retried
+ */
+RequestBase.prototype._shouldRetryCheck = function (err, res, resolve) {
+  if (!this._maxRetries || this._retries++ >= this._maxRetries) {
+    return resolve(false);
+  }
+
+  if (this._retryCallback) {
+    try {
+      this._retryCallback(err, res).then(function (override) {
+        resolve(!!override);
+      });
+
+      return;
+    } catch (err_) {
+      console.error(err_);
+    }
+  }
+
+  if (res && res.status && res.status >= 500 && res.status !== 501) return resolve(true);
+
+  if (err) {
+    if (err.code && ERROR_CODES.includes(err.code)) return resolve(true); // Superagent timeout
+
+    if (err.timeout && err.code === 'ECONNABORTED') return resolve(true);
+    if (err.crossDomain) return resolve(true);
+  }
+
+  return resolve(false);
+}
+
+/**
  * Determine if a request should be retried.
  * (Borrowed from segmentio/superagent-retry)
  *
@@ -179,35 +217,14 @@ const ERROR_CODES = ['ECONNRESET', 'ETIMEDOUT', 'EADDRINFO', 'ESOCKETTIMEDOUT'];
  * @returns {Boolean} if segment should be retried
  */
 RequestBase.prototype._shouldRetry = function (err, res) {
-  return new Promise(resolve => {
-    if (!this._maxRetries || this._retries++ >= this._maxRetries) {
-      return resolve(false);
+  const self = this;
+  return new Promise(function (resolve, reject) {
+    try {
+      return self._shouldRetryCheck(err, res, resolve);
+    } catch (err) {
+      reject(err);
     }
-
-    if (this._retryCallback) {
-      try {
-        this._retryCallback(err, res).then((override) => {
-          resolve(override);
-        });
-        return;
-      } catch (err_) {
-        console.error(err_);
-      }
-    }
-
-    if (res && res.status && res.status >= 500 && res.status !== 501)
-      return resolve(true);
-
-    if (err) {
-      if (err.code && ERROR_CODES.includes(err.code)) return resolve(true);
-      // Superagent timeout
-      if (err.timeout && err.code === 'ECONNABORTED') return resolve(true);
-      if (err.crossDomain) return resolve(true);
-    }
-
-    return resolve(false);
   });
-
 };
 
 /**
@@ -218,20 +235,24 @@ RequestBase.prototype._shouldRetry = function (err, res) {
  */
 
 RequestBase.prototype._retry = function () {
-  return new Promise((resolve, reject) => {
-    this.clearTimeout();
+  const self = this;
+  this.clearTimeout();
+  return new Promise(function (resolve, reject) {
+    try {
+      // node
+      if (self.req) {
+        self.req = null;
+        self.req = self.request();
+      }
 
-    // node
-    if (this.req) {
-      this.req = null;
-      this.req = this.request();
+      self._aborted = false;
+      self.timedout = false;
+      self.timedoutError = null;
+
+      resolve(self._end());
+    } catch (err) {
+      reject(err);
     }
-
-    this._aborted = false;
-    this.timedout = false;
-    this.timedoutError = null;
-
-    resolve(this._end());
   });
 };
 
@@ -244,42 +265,38 @@ RequestBase.prototype._retry = function () {
  */
 
 RequestBase.prototype.then = function (resolve, reject) {
-  if (!this._fullfilledPromise) {
-    const self = this;
-    if (this._endCalled) {
-      console.warn(
-        'Warning: superagent request was sent twice, because both .end() and .then() were called. Never call .end() if you use promises'
-      );
-    }
-
-    this._fullfilledPromise = new Promise((resolve, reject) => {
-      self.on('abort', () => {
-        if (this._maxRetries && this._maxRetries > this._retries) {
-          return;
-        }
-
-        if (this.timedout && this.timedoutError) {
-          reject(this.timedoutError);
-          return;
-        }
-
-        const err = new Error('Aborted');
-        err.code = 'ABORTED';
-        err.status = this.status;
-        err.method = this.method;
-        err.url = this.url;
-        err.req = this.req;
-
-        reject(err);
-      });
-      self.end((err, res) => {
-        if (err) reject(err);
-        else resolve(res);
-      });
-    });
+  if (this._endCalled) {
+    console.warn(
+      'Warning: superagent request was sent twice, because both .end() and .then() were called. Never call .end() if you use promises'
+    );
   }
 
-  return this._fullfilledPromise.then(resolve, reject);
+  this.on('abort', () => {
+    if (this._maxRetries && this._maxRetries > this._retries) {
+      return;
+    }
+
+    if (this.timedout && this.timedoutError) {
+      reject(this.timedoutError);
+      return;
+    }
+
+    const err = new Error('Aborted');
+    err.code = 'ABORTED';
+    err.status = this.status;
+    err.method = this.method;
+    err.url = this.url;
+    err.req = this.req;
+
+    reject(err);
+  });
+
+  this.end((err, res) => {
+    if (err) reject(err);
+    else resolve(res);
+  });
+
+  return this;
 };
 
 RequestBase.prototype.catch = function (cb) {
